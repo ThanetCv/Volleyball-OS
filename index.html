@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>VolleyScore Prototype</title>
+  <script>
+    try {
+      document.documentElement.dataset.theme = localStorage.getItem('volleyTheme') || 'light';
+    } catch (_) {
+      document.documentElement.dataset.theme = 'light';
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">VOLLEYBALL SYSTEM</div>
+        <h1>VolleyScore</h1>
+      </div>
+      <div class="topbar-actions">
+        <nav class="tabs" aria-label="หน้าหลัก">
+          <button class="tab active" data-page="scorePage">Live Score</button>
+          <button class="tab" data-page="historyPage">Match History</button>
+          <button class="tab" data-page="rotationPage">Rotation & Stats</button>
+        </nav>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="สลับโหมดสว่างและโหมดมืด">
+          <span class="theme-toggle-track" aria-hidden="true"><i></i></span>
+          <span class="theme-toggle-icon" id="themeToggleIcon">☀</span>
+          <span class="theme-toggle-label" id="themeToggleLabel">โหมดสว่าง</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section id="scorePage" class="page active">
+        <section class="setup card" id="setupCard">
+          <div class="section-title-row">
+            <div>
+              <div class="eyebrow">NEW MATCH</div>
+              <h2>เริ่มการแข่งขันใหม่</h2>
+              <p class="section-note">ตั้งชื่อทีม เพิ่มโลโก้ได้ตามต้องการ แล้วเลือกรูปแบบการแข่งขัน</p>
+            </div>
+            <span class="badge">Mobile / iPad / Desktop</span>
+          </div>
+
+          <div class="team-setup-grid">
+            <div class="team-setup-block">
+              <label>ชื่อทีม A<input id="teamAInput" value="TEAM A" maxlength="40"></label>
+              <div class="logo-upload-row">
+                <div class="logo-preview empty" id="teamALogoPreview"><span>A</span><img alt="โลโก้ทีม A"></div>
+                <div class="logo-upload-actions">
+                  <label class="upload-chip" for="teamALogoInput">＋ เพิ่มโลโก้ทีม A</label>
+                  <input class="file-input" id="teamALogoInput" type="file" accept="image/png,image/jpeg,image/webp">
+                  <button class="tiny-link hidden" id="removeTeamALogo" type="button">ลบโลโก้</button>
+                  <small>ไม่บังคับ • PNG / JPG / WebP</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="team-setup-block">
+              <label>ชื่อทีม B<input id="teamBInput" value="TEAM B" maxlength="40"></label>
+              <div class="logo-upload-row">
+                <div class="logo-preview empty" id="teamBLogoPreview"><span>B</span><img alt="โลโก้ทีม B"></div>
+                <div class="logo-upload-actions">
+                  <label class="upload-chip" for="teamBLogoInput">＋ เพิ่มโลโก้ทีม B</label>
+                  <input class="file-input" id="teamBLogoInput" type="file" accept="image/png,image/jpeg,image/webp">
+                  <button class="tiny-link hidden" id="removeTeamBLogo" type="button">ลบโลโก้</button>
+                  <small>ใส่เพียงทีมเดียวก็ได้</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid form-grid-3">
+            <label>รูปแบบการแข่งขัน
+              <select id="matchFormat">
+                <option value="3">2 ใน 3 เซต</option>
+                <option value="5">3 ใน 5 เซต</option>
+              </select>
+            </label>
+            <label>ชื่อรายการ / รอบ<input id="eventInput" placeholder="เช่น รอบรองชนะเลิศ"></label>
+            <label>วันที่แข่งขัน<input id="matchDateInput" type="date"></label>
+          </div>
+          <div class="actions-row">
+            <button class="primary" id="startMatchBtn">เริ่มการแข่งขัน</button>
+          </div>
+        </section>
+
+        <section class="score-workspace hidden" id="scoreWorkspace">
+          <aside class="flow-panel card">
+            <div class="flow-head">
+              <div class="mini-team">
+                <span id="flowLeftName">TEAM A</span>
+                <strong id="flowLeftScore">0</strong>
+              </div>
+              <div class="mini-team align-right">
+                <span id="flowRightName">TEAM B</span>
+                <strong id="flowRightScore">0</strong>
+              </div>
+            </div>
+            <div class="flow-meta">
+              <span id="flowSetLabel">SET 1</span>
+              <span class="live-dot">LIVE</span>
+            </div>
+            <div class="point-flow" id="pointFlow">
+              <div class="empty-flow">คะแนนที่เกิดขึ้นจะแสดงเป็นเส้นทางแบบสด</div>
+            </div>
+          </aside>
+
+          <section class="scoreboard card">
+            <div class="scoreboard-header">
+              <div>
+                <div class="eyebrow" id="eventLabel">MATCH</div>
+                <div class="set-summary"><span id="setLabel">SET 1</span><span>•</span><span id="formatLabel">BEST OF 3</span></div>
+              </div>
+              <div class="set-count" id="setCount">0 — 0</div>
+            </div>
+
+            <div class="teams-grid">
+              <article class="team-score" id="leftTeamCard">
+                <div class="serve-indicator" id="leftServe">SERVE</div>
+                <img class="score-team-logo hidden" id="leftTeamLogo" alt="">
+                <h3 id="leftTeamName">TEAM A</h3>
+                <div class="score-number" id="leftScore">0</div>
+                <div class="score-controls">
+                  <button class="score-btn minus" data-side="left" data-action="minus">−</button>
+                  <button class="score-btn plus" data-side="left" data-action="plus">+1</button>
+                </div>
+              </article>
+
+              <div class="center-controls">
+                <div class="status-pill" id="statusPill">กำลังแข่งขัน</div>
+                <button class="swap-btn" id="swapBtn">⇄ สลับฝั่ง</button>
+                <button class="secondary" id="undoBtn">↶ Undo ล่าสุด</button>
+                <button class="ghost" id="serveBtn">● เปลี่ยนทีมเสิร์ฟ</button>
+              </div>
+
+              <article class="team-score" id="rightTeamCard">
+                <div class="serve-indicator hidden" id="rightServe">SERVE</div>
+                <img class="score-team-logo hidden" id="rightTeamLogo" alt="">
+                <h3 id="rightTeamName">TEAM B</h3>
+                <div class="score-number" id="rightScore">0</div>
+                <div class="score-controls">
+                  <button class="score-btn minus" data-side="right" data-action="minus">−</button>
+                  <button class="score-btn plus" data-side="right" data-action="plus">+1</button>
+                </div>
+              </article>
+            </div>
+
+            <div class="score-footer">
+              <button class="ghost" id="fullscreenBtn">⛶ เต็มจอ</button>
+              <button class="danger-ghost" id="resetSetBtn">รีเซ็ตเซต</button>
+              <button class="danger" id="finishMatchBtn">จบการแข่งขัน</button>
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <section id="historyPage" class="page">
+        <div class="history-layout">
+          <section class="card history-controls">
+            <div class="eyebrow">MATCH HISTORY</div>
+            <h2>ประวัติและส่งออกผลการแข่งขัน</h2>
+            <label>เลือกแมตช์
+              <select id="matchSelect"><option value="">ยังไม่มีแมตช์ที่บันทึก</option></select>
+            </label>
+            <label>ขนาดภาพ
+              <select id="exportSize">
+                <option value="1080x1920">Story 9:16 — 1080×1920</option>
+                <option value="1080x1350">Portrait 4:5 — 1080×1350</option>
+                <option value="1080x1080">Square 1:1 — 1080×1080</option>
+                <option value="1920x1080">Landscape 16:9 — 1920×1080</option>
+              </select>
+            </label>
+            <div class="stack-actions">
+              <button class="primary" id="exportPngBtn">ดาวน์โหลด PNG</button>
+              <button class="secondary" id="printPdfBtn">พิมพ์ / บันทึกเป็น PDF</button>
+            </div>
+          </section>
+
+          <section class="export-stage">
+            <div class="export-card" id="exportCard">
+              <div class="graphic-grid"></div>
+              <div class="export-orb"></div>
+              <div class="export-head">
+                <div class="export-kicker">MATCH RESULT</div>
+                <div class="export-meta" id="exportEvent">VOLLEYBALL MATCH</div>
+                <div class="export-date" id="exportDate"></div>
+              </div>
+
+              <div class="export-score-zone">
+                <div class="export-team">
+                  <img class="export-logo hidden" id="exportLogoA" alt="">
+                  <span id="exportTeamA">TEAM A</span>
+                  <strong id="exportSetsA">0</strong>
+                </div>
+                <div class="export-divider">—</div>
+                <div class="export-team right">
+                  <img class="export-logo hidden" id="exportLogoB" alt="">
+                  <span id="exportTeamB">TEAM B</span>
+                  <strong id="exportSetsB">0</strong>
+                </div>
+              </div>
+
+              <div class="winner-line" id="exportWinner">MATCH SUMMARY</div>
+              <div class="export-sets" id="exportSets"></div>
+              <div class="export-footer">VOLLEYBALL MATCH SUMMARY</div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="rotationPage" class="page">
+        <section class="rotation-shell">
+          <div class="card rotation-empty" id="rotationEmpty">
+            <div class="eyebrow">ROTATION & PLAYER STATS</div>
+            <h2>เริ่มแมตช์ก่อนเปิดโหมดวิเคราะห์ทีม</h2>
+            <p class="section-note">หน้านี้จะใช้คะแนนเดียวกับ Live Score และเพิ่มการหมุนตำแหน่ง + สถิติผู้เล่น</p>
+            <button class="primary" id="goLiveScoreBtn">ไปหน้า Live Score</button>
+          </div>
+
+          <div class="rotation-content hidden" id="rotationContent">
+            <section class="card advanced-flow-card">
+              <div class="advanced-flow-head">
+                <div><span id="advancedTeamAName">TEAM A</span><strong id="advancedTeamAScore">0</strong></div>
+                <div class="advanced-set-pill" id="advancedSetLabel">SET 1</div>
+                <div class="right"><span id="advancedTeamBName">TEAM B</span><strong id="advancedTeamBScore">0</strong></div>
+              </div>
+              <div class="advanced-point-flow" id="advancedPointFlow"></div>
+            </section>
+
+            <section class="card lineup-setup" id="lineupSetupCard">
+              <div class="section-title-row">
+                <div>
+                  <div class="eyebrow">SET LINEUP</div>
+                  <h2 id="lineupSetupTitle">ตั้งค่าผู้เล่นก่อนเริ่มเซต</h2>
+                  <p class="section-note">กำหนดผู้เล่น 6 คนตามตำแหน่งเริ่มต้น 1–6 แล้วตรวจผังสนามก่อนยืนยัน</p>
+                </div>
+                <span class="badge" id="lineupSetBadge">SET 1</span>
+              </div>
+
+              <div class="lineup-options">
+                <label>ทีมที่ต้องการติดตาม
+                  <select id="trackedTeamSelect">
+                    <option value="A">TEAM A</option>
+                    <option value="B">TEAM B</option>
+                  </select>
+                </label>
+                <label>ทีมที่เสิร์ฟก่อนในเซตนี้
+                  <select id="firstServerSelect">
+                    <option value="A">TEAM A</option>
+                    <option value="B">TEAM B</option>
+                  </select>
+                </label>
+                <label>สิทธิ์เปลี่ยนตัว / เซต
+                  <select id="substitutionLimitSelect">
+                    <option value="6">6 ครั้ง</option>
+                    <option value="8">8 ครั้ง</option>
+                    <option value="custom">กำหนดเอง</option>
+                  </select>
+                </label>
+                <label class="hidden" id="customSubLimitWrap">จำนวนครั้ง
+                  <input id="customSubLimitInput" type="number" min="1" max="30" value="6">
+                </label>
+              </div>
+
+              <div class="roster-manager">
+                <div class="roster-manager-head">
+                  <div>
+                    <strong>รายชื่อผู้เล่นทั้งหมด</strong>
+                    <small>เพิ่มตัวสำรองได้ตามต้องการ • Libero จะแยกระบบเปลี่ยนตัวปกติ</small>
+                  </div>
+                  <button class="secondary" id="addRosterPlayerBtn" type="button">＋ เพิ่มผู้เล่น</button>
+                </div>
+                <div class="roster-editor" id="rosterEditor"></div>
+              </div>
+
+              <div class="lineup-builder">
+                <div>
+                  <div class="court-label">เลือกผู้เล่นตัวจริง P1–P6</div>
+                  <div class="lineup-inputs" id="lineupInputs"></div>
+                </div>
+                <div class="court-preview-wrap">
+                  <div class="court-label">ตัวอย่างผังเริ่มต้น • หน้าเน็ตอยู่ด้านบน</div>
+                  <div class="volley-court preview-court" id="lineupPreviewCourt"></div>
+                </div>
+              </div>
+              <div class="actions-row">
+                <button class="primary" id="confirmLineupBtn">ยืนยัน Lineup เซตนี้</button>
+              </div>
+            </section>
+
+            <section class="advanced-live hidden" id="advancedLive">
+              <div class="advanced-main-grid">
+                <section class="card court-card">
+                  <div class="court-card-head">
+                    <div>
+                      <div class="eyebrow">LIVE ROTATION</div>
+                      <h2 id="trackedTeamTitle">TEAM A</h2>
+                    </div>
+                    <div class="rotation-badges">
+                      <span class="badge" id="rotationNumberBadge">ROTATION 0</span>
+                      <span class="badge serve-badge" id="advancedServingBadge">SERVING</span>
+                    </div>
+                  </div>
+                  <div class="volley-court live-court" id="liveCourt"></div>
+                  <div class="court-actions">
+                    <button class="secondary" id="manualRotateBtn">↻ หมุนตำแหน่ง</button>
+                    <button class="primary" id="openSubstitutionBtn">⇄ เปลี่ยนตัว</button>
+                    <button class="libero-action" id="openLiberoBtn">L Libero Replacement</button>
+                    <button class="ghost" id="editLineupBtn">แก้ไข Lineup</button>
+                  </div>
+                </section>
+
+                <aside class="card advanced-controls-card">
+                  <div class="eyebrow">RALLY INPUT</div>
+                  <h3>บันทึกแต้มและสาเหตุ</h3>
+                  <div class="advanced-score-mini">
+                    <div><small id="trackedMiniName">ทีมเรา</small><strong id="trackedMiniScore">0</strong></div>
+                    <div><small id="opponentMiniName">คู่แข่ง</small><strong id="opponentMiniScore">0</strong></div>
+                  </div>
+                  <button class="advanced-point-btn positive" id="trackedPointBtn">+1 ทีมที่ติดตาม</button>
+                  <button class="advanced-point-btn opponent" id="opponentPointBtn">+1 คู่แข่ง</button>
+                  <p class="advanced-hint">ถ้าได้สิทธิ์เสิร์ฟคืน ระบบจะหมุนผู้เล่นของทีมที่ติดตามให้อัตโนมัติ</p>
+                </aside>
+              </div>
+
+
+
+              <section class="substitution-grid">
+                <section class="card bench-card">
+                  <div class="section-title-row compact">
+                    <div>
+                      <div class="eyebrow">BENCH</div>
+                      <h3>ผู้เล่นตัวสำรอง</h3>
+                    </div>
+                    <span class="badge" id="substitutionCounter">SUB 0 / 6</span>
+                  </div>
+                  <div class="bench-grid" id="benchGrid"></div>
+                </section>
+                <section class="card sub-history-card">
+                  <div class="section-title-row compact">
+                    <div>
+                      <div class="eyebrow">SUBSTITUTION HISTORY</div>
+                      <h3>ประวัติการเปลี่ยนตัว</h3>
+                    </div>
+                  </div>
+                  <div class="sub-history" id="subHistory"></div>
+                </section>
+                <section class="card libero-history-card">
+                  <div class="section-title-row compact">
+                    <div>
+                      <div class="eyebrow">LIBERO HISTORY</div>
+                      <h3>ประวัติ Libero Replacement</h3>
+                    </div>
+                    <span class="badge" id="actingLiberoBadge">LIBERO OFF COURT</span>
+                  </div>
+                  <div class="sub-history" id="liberoHistory"></div>
+                </section>
+              </section>
+
+              <section class="card player-stats-card">
+                <div class="section-title-row">
+                  <div>
+                    <div class="eyebrow">PLAYER PERFORMANCE</div>
+                    <h2>สถิติผู้เล่น</h2>
+                  </div>
+                  <button class="secondary" id="exportPlayerStatsBtn">ส่งออกสรุป PNG</button>
+                </div>
+                <div class="player-stats-grid" id="playerStatsGrid"></div>
+              </section>
+            </section>
+          </div>
+        </section>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="setModal">
+    <div class="modal card">
+      <div class="eyebrow">SET COMPLETE</div>
+      <h2 id="setWinnerText">ทีมชนะเซต</h2>
+      <p id="setScoreText"></p>
+      <button class="primary" id="nextSetBtn">เริ่มเซตถัดไป</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="finishConfirmModal">
+    <div class="modal card finish-confirm">
+      <div class="modal-icon">🏐</div>
+      <div class="eyebrow">FINISH MATCH</div>
+      <h2>จบการแข่งขันตอนนี้?</h2>
+      <p>ระบบจะบันทึกคะแนนและประวัติของแมตช์นี้ไว้ให้</p>
+      <div class="modal-actions">
+        <button class="ghost" id="cancelFinishBtn">แข่งขันต่อ</button>
+        <button class="danger" id="confirmFinishBtn">จบการแข่งขัน</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="matchCompleteModal">
+    <div class="modal card complete-modal">
+      <div class="celebrate-ring">✓</div>
+      <div class="eyebrow">MATCH COMPLETED</div>
+      <h2 id="matchCompleteTitle">บันทึกผลการแข่งขันแล้ว</h2>
+      <p id="matchCompleteScore"></p>
+      <div class="modal-actions vertical-mobile">
+        <button class="secondary" id="viewResultBtn">ดูผลการแข่งขัน</button>
+        <button class="primary" id="newMatchBtn">＋ เริ่มการแข่งขันใหม่</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="modal-backdrop hidden" id="rallyModal">
+    <div class="modal card rally-modal">
+      <div class="eyebrow">RALLY DETAIL</div>
+      <h2 id="rallyModalTitle">แต้มนี้เกิดจากอะไร?</h2>
+      <div class="reason-grid" id="reasonGrid"></div>
+      <label class="player-picker hidden" id="playerPickerWrap">ผู้เล่นที่เกี่ยวข้อง
+        <select id="rallyPlayerSelect"></select>
+      </label>
+      <div class="modal-actions">
+        <button class="ghost" id="cancelRallyBtn">ยกเลิก</button>
+        <button class="primary" id="confirmRallyBtn" disabled>บันทึกแต้ม</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="modal-backdrop hidden" id="substitutionModal">
+    <div class="modal card substitution-modal">
+      <div class="eyebrow">SUBSTITUTION</div>
+      <h2>เปลี่ยนตัวผู้เล่น</h2>
+      <div class="sub-modal-grid">
+        <label>OUT — ผู้เล่นในสนาม
+          <select id="subOutSelect"></select>
+        </label>
+        <label>IN — ผู้เล่นจากม้านั่ง
+          <select id="subInSelect"></select>
+        </label>
+      </div>
+      <div class="sub-rule-note" id="subRuleNote">เลือกผู้เล่นที่จะเปลี่ยน ระบบจะตรวจสิทธิ์ให้อัตโนมัติ</div>
+      <div class="sub-pair-preview" id="subPairPreview"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="cancelSubstitutionBtn">ยกเลิก</button>
+        <button class="primary" id="confirmSubstitutionBtn">ยืนยันการเปลี่ยนตัว</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="liberoModal">
+    <div class="modal card substitution-modal libero-modal">
+      <div class="eyebrow">LIBERO REPLACEMENT</div>
+      <h2>เข้า–ออก Libero</h2>
+      <div class="sub-modal-grid">
+        <label>OUT — ผู้เล่นในสนาม
+          <select id="liberoOutSelect"></select>
+        </label>
+        <label>IN — ผู้เล่นจากม้านั่ง
+          <select id="liberoInSelect"></select>
+        </label>
+      </div>
+      <div class="sub-rule-note" id="liberoRuleNote">ระบบจะตรวจตำแหน่งแดนหลัง, Acting Libero และ Rally ระหว่างการเข้า–ออกให้อัตโนมัติ</div>
+      <div class="sub-pair-preview" id="liberoPairPreview"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="cancelLiberoBtn">ยกเลิก</button>
+        <button class="libero-action" id="confirmLiberoBtn">ยืนยัน Libero Replacement</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
